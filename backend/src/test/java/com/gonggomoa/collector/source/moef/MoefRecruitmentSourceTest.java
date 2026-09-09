@@ -41,17 +41,22 @@ class MoefRecruitmentSourceTest {
 
 	private String listJson(String... items) {
 		return """
-				{"response":{"header":{"resultCode":"00","resultMsg":"OK"},
-				"body":{"items":[%s],"numOfRows":100,"pageNo":1,"totalCount":%d}}}
-				""".formatted(String.join(",", items), items.length);
+				{"resultCode":200,"resultMsg":"성공했습니다.","totalCount":%d,"result":[%s]}
+				""".formatted(items.length, String.join(",", items));
+	}
+
+	private String detailJson(String item) {
+		return """
+				{"resultCode":200,"resultMsg":"성공했습니다.","result":%s}
+				""".formatted(item);
 	}
 
 	private String item(String sn, String instNm, String title, String ncsCdLst, String hireTypeLst) {
 		return """
 				{"recrutPblntSn":"%s","pblntInstCd":"COD1","instNm":"%s","recrutPbancTtl":"%s",
-				"pbancBgngYmd":"2026-09-01","pbancEndYmd":"2026-09-30","srcUrl":"https://example.org/%s",
+				"pbancBgngYmd":"20260901","pbancEndYmd":"20260930","srcUrl":"https://example.org/%s",
 				"ncsCdLst":"%s","hireTypeLst":"%s","workRgnNmLst":"서울","recrutNope":5,
-				"scrnprcdrMthdExpln":"필기시험 실시","files":[],"steps":[]}
+				"scrnprcdrMthdExpln":"필기시험 실시","ongoingYn":"Y","files":[],"steps":[]}
 				""".formatted(sn, instNm, title, sn, ncsCdLst, hireTypeLst);
 	}
 
@@ -111,20 +116,20 @@ class MoefRecruitmentSourceTest {
 	@Test
 	void fetchDetail_groupsStepsBySortNoRemovingDuplicateRows() {
 		Fixture fixture = fixture();
-		String detailJson = """
-				{"response":{"header":{"resultCode":"00","resultMsg":"OK"},
-				"body":{"items":[{"recrutPblntSn":"1","pblntInstCd":"COD1","instNm":"기관A",
-				"recrutPbancTtl":"전산직 채용","pbancBgngYmd":"2026-09-01","pbancEndYmd":"2026-09-30",
+		String item = """
+				{"recrutPblntSn":"1","pblntInstCd":"COD1","instNm":"기관A",
+				"recrutPbancTtl":"전산직 채용","pbancBgngYmd":"20260901","pbancEndYmd":"20260930",
 				"srcUrl":"https://example.org/1","ncsCdLst":"R600020","hireTypeLst":"R1010",
-				"workRgnNmLst":"서울","recrutNope":5,"scrnprcdrMthdExpln":"필기시험 실시","files":[],
+				"workRgnNmLst":"서울","recrutNope":5,"scrnprcdrMthdExpln":"필기시험 실시",
+				"ongoingYn":null,"files":[],
 				"steps":[
 				{"sortNo":0,"recrutPbancTtl":"전산(공개경쟁채용)","recrutNope":null,"cmpttRt":null},
 				{"sortNo":0,"recrutPbancTtl":"전산(공개경쟁채용)","recrutNope":null,"cmpttRt":null},
 				{"sortNo":1,"recrutPbancTtl":"행정(공개경쟁채용)","recrutNope":null,"cmpttRt":null}
-				]}],"numOfRows":1,"pageNo":1,"totalCount":1}}}
+				]}
 				""";
 		fixture.server().expect(requestTo(containsString("/detail")))
-				.andRespond(withSuccess(detailJson, MediaType.APPLICATION_JSON));
+				.andRespond(withSuccess(detailJson(item), MediaType.APPLICATION_JSON));
 
 		SourceRecruitmentDetail detail = fixture.source().fetchDetail("1");
 
@@ -136,21 +141,20 @@ class MoefRecruitmentSourceTest {
 	@Test
 	void fetchAttachments_keepsOnlyAnnouncementAndReference() {
 		Fixture fixture = fixture();
-		String detailJson = """
-				{"response":{"header":{"resultCode":"00","resultMsg":"OK"},
-				"body":{"items":[{"recrutPblntSn":"1","pblntInstCd":"COD1","instNm":"기관A",
-				"recrutPbancTtl":"전산직 채용","pbancBgngYmd":"2026-09-01","pbancEndYmd":"2026-09-30",
+		String item = """
+				{"recrutPblntSn":"1","pblntInstCd":"COD1","instNm":"기관A",
+				"recrutPbancTtl":"전산직 채용","pbancBgngYmd":"20260901","pbancEndYmd":"20260930",
 				"srcUrl":"https://example.org/1","ncsCdLst":"R600020","hireTypeLst":"R1010",
-				"workRgnNmLst":"서울","recrutNope":5,"scrnprcdrMthdExpln":"필기시험 실시",
+				"workRgnNmLst":"서울","recrutNope":5,"scrnprcdrMthdExpln":"필기시험 실시","ongoingYn":null,
 				"files":[
 				{"atchFileNm":"공고문.pdf","url":"https://x/1","atchFileType":"A"},
 				{"atchFileNm":"입사지원서.hwp","url":"https://x/2","atchFileType":"B"},
 				{"atchFileNm":"직무기술서.pdf","url":"https://x/3","atchFileType":"C"},
 				{"atchFileNm":"참고자료.pdf","url":"https://x/4","atchFileType":"Z"}
-				],"steps":[]}],"numOfRows":1,"pageNo":1,"totalCount":1}}}
+				],"steps":[]}
 				""";
 		fixture.server().expect(requestTo(containsString("/detail")))
-				.andRespond(withSuccess(detailJson, MediaType.APPLICATION_JSON));
+				.andRespond(withSuccess(detailJson(item), MediaType.APPLICATION_JSON));
 
 		var attachments = fixture.source().fetchAttachments("1");
 

@@ -50,7 +50,11 @@ public class MoefRecruitmentSource implements RecruitmentSource {
 	private static final List<InstitutionType> MVP_INSTITUTION_TYPES = List.of(
 			InstitutionType.A2001, InstitutionType.A2002, InstitutionType.A2003, InstitutionType.A2004);
 
-	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
+	/** 요청 파라미터({@code pbancBgngYmd} 등)에 쓰는 형식 — {@code yyyy-MM-dd}. */
+	private static final DateTimeFormatter REQUEST_DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
+
+	/** 응답 필드에 실제로 오는 형식 — {@code yyyyMMdd} (docs/08-external-api.md 참고). */
+	private static final DateTimeFormatter RESPONSE_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
 	private static final Pattern SERVICE_KEY_PATTERN = Pattern.compile("serviceKey=[^&]*");
 
@@ -67,8 +71,7 @@ public class MoefRecruitmentSource implements RecruitmentSource {
 	public List<SourceRecruitment> fetchList(LocalDate from, LocalDate to, int page) {
 		List<SourceRecruitment> merged = new ArrayList<>();
 		for (InstitutionType instType : MVP_INSTITUTION_TYPES) {
-			MoefApiBody body = requestList(from, to, page, instType);
-			for (MoefItem item : safeList(body == null ? null : body.items())) {
+			for (MoefItem item : requestList(from, to, page, instType)) {
 				merged.add(toSourceRecruitment(item, instType));
 			}
 		}
@@ -95,7 +98,7 @@ public class MoefRecruitmentSource implements RecruitmentSource {
 		return SourceType.MOEF;
 	}
 
-	private MoefApiBody requestList(LocalDate from, LocalDate to, int page, InstitutionType instType) {
+	private List<MoefItem> requestList(LocalDate from, LocalDate to, int page, InstitutionType instType) {
 		Map<String, String> params = new LinkedHashMap<>();
 		params.put("resultType", "json");
 		params.put("numOfRows", String.valueOf(properties.numOfRows()));
@@ -105,12 +108,13 @@ public class MoefRecruitmentSource implements RecruitmentSource {
 		params.put("hireTypeLst", properties.hireTypeLst());
 		params.put("instType", instType.name());
 		if (from != null) {
-			params.put("pbancBgngYmd", DATE_FORMAT.format(from));
+			params.put("pbancBgngYmd", REQUEST_DATE_FORMAT.format(from));
 		}
 		if (to != null) {
-			params.put("pbancEndYmd", DATE_FORMAT.format(to));
+			params.put("pbancEndYmd", REQUEST_DATE_FORMAT.format(to));
 		}
-		return fetchBody("/list", params);
+		MoefListEnvelope envelope = doGet("/list", params, MoefListEnvelope.class);
+		return safeList(envelope.result());
 	}
 
 	private MoefItem fetchDetailItem(String externalId) {
@@ -118,12 +122,11 @@ public class MoefRecruitmentSource implements RecruitmentSource {
 		Map<String, String> params = new LinkedHashMap<>();
 		params.put("resultType", "json");
 		params.put("sn", externalId);
-		MoefApiBody body = fetchBody("/detail", params);
-		List<MoefItem> items = safeList(body == null ? null : body.items());
-		if (items.isEmpty()) {
+		MoefDetailEnvelope envelope = doGet("/detail", params, MoefDetailEnvelope.class);
+		if (envelope.result() == null) {
 			throw new MoefApiException("MOEF 상세 조회 결과 없음 (externalId=%s)".formatted(externalId));
 		}
-		return items.get(0);
+		return envelope.result();
 	}
 
 	private void ensureRateLimitAvailable() {
@@ -133,27 +136,26 @@ public class MoefRecruitmentSource implements RecruitmentSource {
 		}
 	}
 
-	private MoefApiBody fetchBody(String path, Map<String, String> params) {
+	private <T extends MoefResponseEnvelope> T doGet(String path, Map<String, String> params, Class<T> responseType) {
 		return executeWithRetry(path + " 호출", () -> {
 			URI uri = buildUri(path, params);
 			log.debug("MOEF 요청: {}", maskServiceKey(uri.toString()));
-			ResponseEntity<MoefApiEnvelope> response;
+			ResponseEntity<T> response;
 			try {
-				response = restClient.get().uri(uri).retrieve().toEntity(MoefApiEnvelope.class);
+				response = restClient.get().uri(uri).retrieve().toEntity(responseType);
 			} catch (RestClientException e) {
 				throw new MoefApiException("MOEF 호출 실패: %s".formatted(maskServiceKey(uri.toString())), e);
 			}
 			updateRateLimit(response.getHeaders());
-			MoefApiEnvelope envelope = response.getBody();
-			if (envelope == null || envelope.response() == null || envelope.response().header() == null) {
+			T envelope = response.getBody();
+			if (envelope == null) {
 				throw new MoefApiException("MOEF 응답 형식이 올바르지 않습니다: %s".formatted(maskServiceKey(uri.toString())));
 			}
-			MoefApiHeader header = envelope.response().header();
-			if (!header.isSuccess()) {
-				throw new MoefApiException("MOEF API 오류 응답 (resultCode=%s, resultMsg=%s)"
-						.formatted(header.resultCode(), header.resultMsg()));
+			if (!envelope.isSuccess()) {
+				throw new MoefApiException("MOEF API 오류 응답 (resultCode=%d, resultMsg=%s)"
+						.formatted(envelope.resultCode(), envelope.resultMsg()));
 			}
-			return envelope.response().body();
+			return envelope;
 		});
 	}
 
@@ -259,7 +261,7 @@ public class MoefRecruitmentSource implements RecruitmentSource {
 			return null;
 		}
 		try {
-			return LocalDate.parse(raw, DATE_FORMAT);
+			return LocalDate.parse(raw, RESPONSE_DATE_FORMAT);
 		} catch (DateTimeParseException e) {
 			log.warn("날짜 파싱 실패: {}", raw);
 			return null;

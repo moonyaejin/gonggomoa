@@ -100,6 +100,18 @@ public class ExamPlan {
 		this.confidence = confidence;
 	}
 
+	/**
+	 * screening_procedure_text 1차 판정만으로 필기전형이 없다고 확정된 경우 사용한다.
+	 * LLM 추출 없이도 확실한 사실이므로 검수 대기(AUTO)로 남기지 않고 즉시 VERIFIED
+	 * 처리한다 — 그렇지 않으면 필기 없는 공고까지 검수 큐에 쌓여 "하루 5분" 전제가 깨진다.
+	 */
+	public void confirmNoWrittenExam() {
+		this.hasWrittenExam = false;
+		this.ncsAreasConfirmed = false;
+		this.verifyStatus = VerifyStatus.VERIFIED;
+		this.verifiedAt = LocalDateTime.now();
+	}
+
 	public void markVerified() {
 		this.verifyStatus = VerifyStatus.VERIFIED;
 		this.verifiedAt = LocalDateTime.now();

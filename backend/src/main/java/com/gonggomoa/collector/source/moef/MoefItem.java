@@ -22,6 +22,7 @@ public record MoefItem(
 		String workRgnNmLst,
 		Integer recrutNope,
 		String scrnprcdrMthdExpln,
+		String ongoingYn,
 		List<MoefFile> files,
 		List<MoefStep> steps) {
 }
