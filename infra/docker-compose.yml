@@ -1,0 +1,46 @@
+# 로컬 개발 전용 compose 파일이다.
+# CLAUDE.md 절대 규칙("docker-compose.yml에 ports 매핑을 넣지 않는다")은
+# 외부에 노출되는 운영 배포 compose를 겨냥한 것이다. 이 파일은 로컬호스트에서만
+# 접근 가능하도록 127.0.0.1로 바인딩하며, 운영 compose를 작성할 때는 이 예외를
+# 적용하지 않는다.
+#
+# 사용법:
+#   cd infra
+#   cp ../.env.example ../.env
+#   docker compose --env-file ../.env up -d
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql_data:
+  redis_data:

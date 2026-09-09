@@ -1,0 +1,44 @@
+# ===== 시크릿 (최우선) =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# ===== Java / Gradle =====
+build/
+.gradle/
+*.class
+*.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+*.war
+out/
+
+# ===== Node / React =====
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+!.vscode/settings.json
+.DS_Store
+
+# ===== 로그 / 임시 =====
+*.log
+logs/
+tmp/
+
+# ===== 스파이크 산출물 =====
+# .http 파일 자체는 커밋하되, 응답 덤프는 제외
+spike/responses/
+spike/*.json
+spike/downloads/
+
+# ===== 첨부파일 캐시 =====
+attachments/
