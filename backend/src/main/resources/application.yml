@@ -26,3 +26,17 @@ management:
     web:
       exposure:
         include: health,info
+
+gonggomoa:
+  collector:
+    moef:
+      base-url: https://apis.data.go.kr/1051000/recruitment
+      service-key: ${MOEF_SERVICE_KEY}
+      ncs-cd-lst: R600020,R600002
+      hire-type-lst: R1010,R1070
+      num-of-rows: 100
+      connect-timeout-ms: 5000
+      read-timeout-ms: 10000
+      max-retries: 3
+      retry-backoff-ms: 500
+      rate-limit-threshold: 100
