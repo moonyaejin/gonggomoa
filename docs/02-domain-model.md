@@ -49,6 +49,7 @@ erDiagram
     bigint recruitment_id FK
     string file_name
     string file_url
+    enum attachment_type
     string mime_type
     text extracted_text
     enum extract_status
@@ -155,6 +156,8 @@ API `files[].atchFileType`.
 > **`Z`(기타)를 반드시 포함한다.** 한국철도공사 공고 확인 결과, 공고문 본문은 "필기시험 세부사항은 [참고7]에서 확인"이라고만 하고, 실제 NCS 영역은 `Z` 타입의 `채용 공고 참고자료.pdf`에 있다. `A`만 받으면 이 서비스의 차별점을 확보할 수 없다.
 >
 > 단 `Z`에는 `자기소개서.pdf` 같은 무관한 파일도 섞인다. **파일명에 `참고`, `세부`, `별첨` 등이 포함된 것만 선별**하는 휴리스틱을 적용하고, 선별 실패 시 `Z` 전체를 받되 크기 상한을 지킨다.
+
+> **`ATTACHMENT.attachment_type`에 A/B/C/Z 4개 값을 모두 정의한다.** 단, 실제로 행이 저장되는 것은 `A`(공고문)와 `Z`(기타)뿐이다. `B`(입사지원서)·`C`(직무기술서)는 수집 단계에서 필터링되어 애초에 저장되지 않는다. 4값을 모두 정의해두는 이유는 API 원본 코드 체계를 그대로 보존해 향후 필터링 정책이 바뀌어도 Enum을 다시 설계할 필요가 없게 하기 위함이다. "2차: 첨부 공고문(`atchFileType="A"`)" 추출 단계는 이 컬럼으로 `A`만 골라서 처리한다.
 
 ### ExamType (시험 유형)
 ```
