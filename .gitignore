@@ -42,3 +42,8 @@ spike/downloads/
 
 # ===== 첨부파일 캐시 =====
 attachments/
+
+# ===== 개발일지 (로컬 전용 — 날것 그대로, 커밋하지 않는다) =====
+# 공개용은 별도로 벨로그 등에 각색해서 발행한다. docs/06-records.md 참고.
+docs/devlog/*.md
+!docs/devlog/.gitkeep
