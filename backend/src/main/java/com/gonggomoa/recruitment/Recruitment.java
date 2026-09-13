@@ -123,14 +123,26 @@ public class Recruitment {
 		this.status = RecruitmentStatus.CANCELED;
 	}
 
+	/**
+	 * 정정공고 재수집 시 호출한다. {@code written_exam_at}은 건드리지 않는다 — 그 필드는
+	 * 추출(extraction) 단계가 채우는 값이라, 수집 단계에서 재확인 없이 초기화하면
+	 * 이미 추출된 정보를 지워버리게 된다.
+	 */
 	public void updateFromReCollection(String title, LocalDate applyStartAt, LocalDate applyEndAt,
-			LocalDate writtenExamAt, String screeningProcedureText, String contentHash, LocalDateTime collectedAt) {
+			String screeningProcedureText, String contentHash, LocalDateTime collectedAt) {
 		this.title = title;
 		this.applyStartAt = applyStartAt;
 		this.applyEndAt = applyEndAt;
-		this.writtenExamAt = writtenExamAt;
 		this.screeningProcedureText = screeningProcedureText;
 		this.contentHash = contentHash;
 		this.collectedAt = collectedAt;
+	}
+
+	public void addPosition(Position position) {
+		this.positions.add(position);
+	}
+
+	public void addAttachment(Attachment attachment) {
+		this.attachments.add(attachment);
 	}
 }
