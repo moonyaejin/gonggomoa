@@ -1,5 +1,6 @@
 package com.gonggomoa.collector;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -10,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -45,15 +45,33 @@ public class CollectionBatchLog {
 	@Column(name = "error_message", length = 1000)
 	private String errorMessage;
 
-	@Builder
-	private CollectionBatchLog(LocalDateTime startedAt, Integer durationMs, Integer fetchedCount, Integer newCount,
-			Integer updatedCount, boolean success, String errorMessage) {
+	private CollectionBatchLog(LocalDateTime startedAt) {
 		this.startedAt = startedAt;
-		this.durationMs = durationMs;
+		this.success = false;
+	}
+
+	public static CollectionBatchLog start() {
+		return new CollectionBatchLog(LocalDateTime.now());
+	}
+
+	public void complete(int fetchedCount, int newCount, int updatedCount) {
+		this.durationMs = elapsedMs();
 		this.fetchedCount = fetchedCount;
 		this.newCount = newCount;
 		this.updatedCount = updatedCount;
-		this.success = success;
+		this.success = true;
+	}
+
+	public void fail(int fetchedCount, int newCount, int updatedCount, String errorMessage) {
+		this.durationMs = elapsedMs();
+		this.fetchedCount = fetchedCount;
+		this.newCount = newCount;
+		this.updatedCount = updatedCount;
+		this.success = false;
 		this.errorMessage = errorMessage;
+	}
+
+	private int elapsedMs() {
+		return (int) Duration.between(startedAt, LocalDateTime.now()).toMillis();
 	}
 }
