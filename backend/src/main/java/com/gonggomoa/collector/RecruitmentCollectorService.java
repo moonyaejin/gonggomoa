@@ -2,6 +2,7 @@ package com.gonggomoa.collector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ public class RecruitmentCollectorService {
 	private final RecruitmentPersistenceService persistenceService;
 	private final CollectionBatchLogRepository batchLogRepository;
 	private final CacheInvalidator cacheInvalidator;
+	private final AtomicBoolean running = new AtomicBoolean(false);
 
 	public RecruitmentCollectorService(List<RecruitmentSource> sources,
 			RecruitmentPersistenceService persistenceService, CollectionBatchLogRepository batchLogRepository,
@@ -36,7 +38,24 @@ public class RecruitmentCollectorService {
 		this.cacheInvalidator = cacheInvalidator;
 	}
 
-	public void collect() {
+	/**
+	 * 매시 정각 스케줄러와 관리자 수동 실행(POST /api/admin/collect)이 겹치지 않도록
+	 * 같은 JVM 안에서는 항상 이 메서드를 통해서만 배치를 돈다. 스케줄러는 ShedLock으로
+	 * 여러 인스턴스 간 중복 실행을 막고, 이 플래그는 같은 인스턴스 안에서의 동시 실행을
+	 * 막는다.
+	 */
+	public CollectionResult collect() {
+		if (!running.compareAndSet(false, true)) {
+			throw new CollectionInProgressException();
+		}
+		try {
+			return runCollection();
+		} finally {
+			running.set(false);
+		}
+	}
+
+	private CollectionResult runCollection() {
 		CollectionBatchLog batchLog = CollectionBatchLog.start();
 		batchLogRepository.save(batchLog);
 
@@ -57,9 +76,12 @@ public class RecruitmentCollectorService {
 			}
 			batchLog.complete(fetched, created, updated);
 			log.info("수집 배치 완료 — 조회 {}건, 신규 {}건, 갱신 {}건", fetched, created, updated);
+			return new CollectionResult(fetched, created, updated, true, null);
 		} catch (Exception e) {
 			log.error("수집 배치 실패", e);
-			batchLog.fail(fetched, created, updated, truncate(e.getMessage()));
+			String errorMessage = truncate(e.getMessage());
+			batchLog.fail(fetched, created, updated, errorMessage);
+			return new CollectionResult(fetched, created, updated, false, errorMessage);
 		} finally {
 			batchLogRepository.save(batchLog);
 			cacheInvalidator.invalidateRecruitmentCaches();
