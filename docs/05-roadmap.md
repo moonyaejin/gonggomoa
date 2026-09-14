@@ -258,7 +258,7 @@ X-RateLimit-Remaining: 995
 - 도메인 엔티티 + 마이그레이션 (`INSTITUTION` ~ `CLICK_EVENT` 전체)
 - Collector 구현: API 폴링, `content_hash` 중복 차단, `RECRUITMENT`/`POSITION` 저장
 - `COLLECTION_BATCH_LOG` 기록
-- 텔레그램 알림 (배치 실패 시)
+- ~~텔레그램 알림 (배치 실패 시)~~ ✅ 디스코드 웹훅으로 구현 (연속 실패 시에만 발송, ADR-0005 참고)
 - ~~`R1030`(무기계약직) 필기 시행 비율 확인~~ ✅ 완료. 순수 R1030 단독 6건 중 2건(33%) 필기 시행 → **수집 대상 포함 확정**
 - GitHub Issues / Projects 보드 세팅
 

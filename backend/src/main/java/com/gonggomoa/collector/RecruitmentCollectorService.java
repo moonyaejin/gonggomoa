@@ -27,15 +27,17 @@ public class RecruitmentCollectorService {
 	private final RecruitmentPersistenceService persistenceService;
 	private final CollectionBatchLogRepository batchLogRepository;
 	private final CacheInvalidator cacheInvalidator;
+	private final BatchFailureAlertService batchFailureAlertService;
 	private final AtomicBoolean running = new AtomicBoolean(false);
 
 	public RecruitmentCollectorService(List<RecruitmentSource> sources,
 			RecruitmentPersistenceService persistenceService, CollectionBatchLogRepository batchLogRepository,
-			CacheInvalidator cacheInvalidator) {
+			CacheInvalidator cacheInvalidator, BatchFailureAlertService batchFailureAlertService) {
 		this.sources = sources;
 		this.persistenceService = persistenceService;
 		this.batchLogRepository = batchLogRepository;
 		this.cacheInvalidator = cacheInvalidator;
+		this.batchFailureAlertService = batchFailureAlertService;
 	}
 
 	/**
@@ -85,6 +87,9 @@ public class RecruitmentCollectorService {
 		} finally {
 			batchLogRepository.save(batchLog);
 			cacheInvalidator.invalidateRecruitmentCaches();
+			if (!batchLog.isSuccess()) {
+				batchFailureAlertService.alertIfConsecutiveFailureThresholdReached(batchLog);
+			}
 		}
 	}
 

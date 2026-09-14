@@ -40,3 +40,10 @@ gonggomoa:
       max-retries: 3
       retry-backoff-ms: 500
       rate-limit-threshold: 100
+    discord-alert:
+      webhook-url: ${DISCORD_WEBHOOK_URL:}
+      failure-threshold: 3
+      connect-timeout-ms: 3000
+      read-timeout-ms: 5000
+      max-retries: 3
+      retry-backoff-ms: 500
