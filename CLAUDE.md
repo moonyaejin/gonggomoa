@@ -43,7 +43,7 @@
 
 - Docker Compose, Nginx + Let's Encrypt
 - GitHub Actions (CI: build + test)
-- 모니터링: Spring Boot Actuator + 텔레그램 봇 알림
+- 모니터링: Spring Boot Actuator + 디스코드 웹훅 알림 (ADR-0005)
 - 대시보드: Grafana (MySQL 데이터소스 직접 연결). 지표 집계용 별도 배치·API를 만들지 않는다. **대시보드 정의는 JSON으로 `infra/grafana/`에 커밋한다**
 
 ## 아키텍처 원칙

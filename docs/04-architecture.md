@@ -8,7 +8,7 @@ flowchart LR
     API[공공데이터포털 API<br/>인사혁신처 / 재정경제부]
     FILE[기관 첨부파일<br/>HWP / PDF]
     LLM[Anthropic<br/>Messages API]
-    TG[Telegram Bot]
+    DC[Discord Webhook]
   end
 
   subgraph APP[Spring Boot 애플리케이션]
@@ -42,7 +42,7 @@ flowchart LR
   QRY --> DB
   QRY --> RD
   ICS --> RD
-  MON --> TG
+  MON --> DC
   COL -.실패.-> MON
   WEB --> QRY
   WEB --> ADM
@@ -212,10 +212,10 @@ flowchart TB
 
 | 장애 | 영향 | 대응 |
 |---|---|---|
-| 공공데이터 API 응답 없음 | 신규 공고 미수집 | 3회 재시도 → 실패 시 텔레그램 알림. 기존 데이터로 서비스 정상 |
+| 공공데이터 API 응답 없음 | 신규 공고 미수집 | 3회 재시도 → 연속 실패 시 디스코드 웹훅 알림. 기존 데이터로 서비스 정상 |
 | HWP 파싱 실패 | 해당 공고 시험정보 없음 | `UNCERTAIN` 처리 후 원문 링크만 노출. 서비스 중단 없음 |
 | Claude API 오류/한도 | 신규 추출 중단 | 큐에 보관 후 다음 배치에서 재시도 |
 | Redis 다운 | 응답 지연 | DB 직접 조회로 폴백. 캐시는 선택적 의존성으로 구현 |
-| MySQL 다운 | 서비스 중단 | 텔레그램 알림 + 수동 복구 |
+| MySQL 다운 | 서비스 중단 | 디스코드 웹훅 알림 + 수동 복구 |
 
 **Redis를 필수 의존성으로 만들지 말 것.** 캐시 조회 실패는 예외가 아니라 미스로 취급한다.
