@@ -94,6 +94,25 @@ class MoefRecruitmentSourceTest {
 	}
 
 	@Test
+	void fetchList_mapsR1030ToPermanentContract() {
+		Fixture fixture = fixture();
+		fixture.server().expect(requestTo(containsString("instType=A2001")))
+				.andRespond(withSuccess(listJson(item("3", "기관D", "무기계약직 채용", "R600002", "R1030")),
+						MediaType.APPLICATION_JSON));
+		fixture.server().expect(requestTo(containsString("instType=A2002")))
+				.andRespond(withSuccess(listJson(), MediaType.APPLICATION_JSON));
+		fixture.server().expect(requestTo(containsString("instType=A2003")))
+				.andRespond(withSuccess(listJson(), MediaType.APPLICATION_JSON));
+		fixture.server().expect(requestTo(containsString("instType=A2004")))
+				.andRespond(withSuccess(listJson(), MediaType.APPLICATION_JSON));
+
+		var results = fixture.source().fetchList(null, null, 1);
+
+		assertThat(results).hasSize(1);
+		assertThat(results.get(0).employmentType()).isEqualTo(EmploymentType.PERMANENT_CONTRACT);
+	}
+
+	@Test
 	void fetchList_undefinedCodesMapToUnknownInsteadOfThrowing() {
 		Fixture fixture = fixture();
 		fixture.server().expect(requestTo(containsString("instType=A2001")))
