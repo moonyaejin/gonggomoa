@@ -4,7 +4,7 @@
 ### =========================================================
 
 @host = https://apis.data.go.kr/1051000/recruitment
-@serviceKey = 여기에_Decoding_인증키_붙여넣기
+@serviceKey = MOEF_SERVICE_KEY
 
 # 주의: 401이 나면 Encoding 키로 바꿔서 시도할 것.
 # 두 종류 중 하나만 동작하는 경우가 많음.
@@ -138,6 +138,64 @@ Accept: application/pdf,*/*
 GET https://opendata.alio.go.kr/recruit/downloadAtchFile?recrutAtchFileNo=3066893
 
 
+### -----------------------------------------------------
+### [11] R1030(무기계약직) 필기 시행 비율 확인 — A2001(공기업)
+### W1 로드맵: R1030 필기 시행 비율 확인 → 수집 대상 포함 여부 결정
+### instType은 콤마 다중값이 동작하지 않으므로 A2001~A2004 각각 호출
+### -----------------------------------------------------
+GET {{host}}/list
+  ?serviceKey={{serviceKey}}
+  &resultType=json
+  &numOfRows=30
+  &pageNo=1
+  &ongoingYn=Y
+  &ncsCdLst=R600020,R600002
+  &hireTypeLst=R1030
+  &instType=A2001
+
+
+### -----------------------------------------------------
+### [12] R1030(무기계약직) 필기 시행 비율 확인 — A2002(준정부기관/기금관리형)
+### -----------------------------------------------------
+GET {{host}}/list
+  ?serviceKey={{serviceKey}}
+  &resultType=json
+  &numOfRows=30
+  &pageNo=1
+  &ongoingYn=Y
+  &ncsCdLst=R600020,R600002
+  &hireTypeLst=R1030
+  &instType=A2002
+
+
+### -----------------------------------------------------
+### [13] R1030(무기계약직) 필기 시행 비율 확인 — A2003(준정부기관/위탁집행형)
+### -----------------------------------------------------
+GET {{host}}/list
+  ?serviceKey={{serviceKey}}
+  &resultType=json
+  &numOfRows=30
+  &pageNo=1
+  &ongoingYn=Y
+  &ncsCdLst=R600020,R600002
+  &hireTypeLst=R1030
+  &instType=A2003
+
+
+### -----------------------------------------------------
+### [14] R1030(무기계약직) 필기 시행 비율 확인 — A2004(기타공기업)
+### -----------------------------------------------------
+GET {{host}}/list
+  ?serviceKey={{serviceKey}}
+  &resultType=json
+  &numOfRows=30
+  &pageNo=1
+  &ongoingYn=Y
+  &ncsCdLst=R600020,R600002
+  &hireTypeLst=R1030
+  &instType=A2004
+
+
 ### =========================================================
 ### 확인 체크리스트
 ### =========================================================
@@ -146,6 +204,7 @@ GET https://opendata.alio.go.kr/recruit/downloadAtchFile?recrutAtchFileNo=306689
 ### [ ] [9] 참고자료 PDF에 NCS 세부 영역이 실제로 있는가 ⭐ 최우선
 ### [ ] [2] totalCount 가 몇 건인가 (필터 효과)
 ### [ ] [4] 정보통신 결과에 전산이 아닌 공고가 얼마나 섞이는가
+### [x] [11]~[14] R1030 totalCount 및 각 건의 scrnprcdrMthdExpln 필기 시행 비율 — 완료. 순수 R1030 단독 6건 중 2건(33%) 필기 시행 → 수집 대상 포함 확정 (docs/adr/0004 발견 5)
 ### [ ] 응답 헤더 X-RateLimit-Remaining 이 정상 감소하는가
 ### [ ] 401 발생 시 Encoding/Decoding 키 전환으로 해결되는가
 ### =========================================================

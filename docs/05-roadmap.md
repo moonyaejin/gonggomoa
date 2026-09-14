@@ -78,11 +78,13 @@
 
 ```
 ncsCdLst    = R600020,R600002   # 정보통신, 경영.회계.사무
-hireTypeLst = R1010,R1070       # 정규직, 청년인턴(채용형)
+hireTypeLst = R1010,R1030,R1070 # 정규직, 무기계약직, 청년인턴(채용형)
 ongoingYn   = Y
 numOfRows   = 100
 pageNo      = 1..N
 ```
+
+> **`R1030`(무기계약직) 포함 확정 (W1).** A2001~A2004에서 R1030 9건 실측 결과, 기존 필터(`R1010`)와 섞이지 않은 순수 R1030 단독 공고 6건 중 2건(33%)이 필기를 시행한다. 상세: `docs/adr/0004-extraction-input-analysis.md` 발견 5.
 
 > ⚠️ **`instType`을 넣으면 `totalCount: 0`이 반환된다.** 콤마 다중값 미지원 또는 파라미터명 불일치로 추정. 실호출 결과:
 > | 파라미터 | totalCount |
@@ -257,7 +259,7 @@ X-RateLimit-Remaining: 995
 - Collector 구현: API 폴링, `content_hash` 중복 차단, `RECRUITMENT`/`POSITION` 저장
 - `COLLECTION_BATCH_LOG` 기록
 - 텔레그램 알림 (배치 실패 시)
-- **`R1030`(무기계약직) 필기 시행 비율 확인** → 수집 대상 포함 여부 결정
+- ~~`R1030`(무기계약직) 필기 시행 비율 확인~~ ✅ 완료. 순수 R1030 단독 6건 중 2건(33%) 필기 시행 → **수집 대상 포함 확정**
 - GitHub Issues / Projects 보드 세팅
 
 **완료 기준**: 배치를 돌리면 전산·행정 공고가 DB에 저장되고, 두 번 돌려도 중복이 생기지 않는다.
